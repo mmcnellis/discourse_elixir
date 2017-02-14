@@ -28,3 +28,7 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
+
+config :discourse_elixir, discourse_api_key: "change me"
+config :discourse_elixir, discourse_username: "change me"
+config :discourse_elixir, discourse_endpoint: "change me"

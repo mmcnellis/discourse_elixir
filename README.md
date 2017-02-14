@@ -1,11 +1,10 @@
 # DiscourseElixir
 
-**TODO: Add description**
+A Discourse client for Elixir.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `discourse_elixir` to your list of dependencies in `mix.exs`:
+Add `discourse_elixir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -13,7 +12,4 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/discourse_elixir](https://hexdocs.pm/discourse_elixir).
-
+Then update config/config.exs with your Discourse api_key, username, and endpoint.
