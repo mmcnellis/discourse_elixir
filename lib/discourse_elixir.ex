@@ -41,7 +41,7 @@ defmodule DiscourseElixir do
     case get(url) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body[:user]["id"]}
-      {:ok, %HTTPoison.Response{status_code: 404, body: body}} ->
+      {:ok, %HTTPoison.Response{status_code: 404, body: _}} ->
         {:ok, "User not found"}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
@@ -78,7 +78,7 @@ defmodule DiscourseElixir do
     case get(url) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body}
-      {:ok, %HTTPoison.Response{status_code: 404, body: body}} ->
+      {:ok, %HTTPoison.Response{status_code: 404, body: _}} ->
         {:ok, "User not found"}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
@@ -108,7 +108,7 @@ defmodule DiscourseElixir do
   variation of `{:error,
   %{errors: %{"email" => [],
   "password" => ["is too short (minimum is 10 characters)"],
-  "username" => ["must be unique"]}}}` If HTTPoison throws an error, returns {:error, reason}
+  "username" => ["must be unique"]}}}` If HTTPoison throws an error, returns `{:error, reason}`
   """
   @spec create_user(string, string, string) :: {:ok, map | string} | {:error, map | Error.t}
   def create_user(name, email, password) do
@@ -136,6 +136,74 @@ defmodule DiscourseElixir do
   @spec create_user!(string, string, string) :: map | string | Error.t
   def create_user!(name, email, password) do
     case create_user(name, email, password) do
+      {:ok, response} -> response
+      {:error, reason} -> raise Error, reason: reason
+    end
+  end
+
+  @doc """
+  Issues a PUT request to deactivate the given user.
+
+  If successful, returns `{:ok, "User has been deactivated}` or `{:ok, "User does not exist}`
+  and if the request fails, returns `{:error, reason}`
+  """
+  @spec deactivate_user(string) :: {:ok, string} | {:error, Error.t}
+  def deactivate_user(username) do
+    url = "/users/#{username}?api_key=#{@api_key}&api_username=#{@username}"
+
+    case put url, {:form, [{"username", username}, {"active", false}]} do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, body.success}
+      {:ok, %HTTPoison.Response{status_code: 404, body: _}} ->
+        {:ok, "User not found"}
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Issues a PUT request to deactivate the given user.
+
+  If successful, returns `{:ok, "OK"}` or `{:ok, "User not found"}`
+  and if the request fails, returns `{:error, reason}`
+  """
+  @spec deactivate_user!(string) :: string
+  def deactivate_user!(username) do
+    case deactivate_user(username) do
+      {:ok, response} -> response
+      {:error, reason} -> raise Error, reason: reason
+    end
+  end
+
+  @doc """
+  Issues a PUT request to reactivate the given user.
+
+  If successful, returns `{:ok, "User has been deactivated}` or `{:ok, "User does not exist}`
+  and if the request fails, returns `{:error, reason}`
+  """
+  @spec reactivate_user(string) :: {:ok, string} | {:error, Error.t}
+  def reactivate_user(username) do
+    url = "/users/#{username}?api_key=#{@api_key}&api_username=#{@username}"
+
+    case put url, {:form, [{"username", username}, {"active", true}]} do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, body.success}
+      {:ok, %HTTPoison.Response{status_code: 404, body: _}} ->
+        {:ok, "User not found"}
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  @dox """
+  Issues a PUT request to reactivate the given user, raising an error if the request fails.
+
+  This function works the same way as `reactivate_user/1` but only returns the response when
+  the request is successful. If the request fails, an error is raised.
+  """
+  @spec reactivate_user!(string) :: string
+  def reactivate_user!(username) do
+    case reactivate_user(username) do
       {:ok, response} -> response
       {:error, reason} -> raise Error, reason: reason
     end
