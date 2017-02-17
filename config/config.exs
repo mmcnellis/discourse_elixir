@@ -29,6 +29,7 @@ use Mix.Config
 #
 #     import_config "#{Mix.env}.exs"
 
+# Put these in your project's `/config/config.exs`
 config :discourse_elixir, discourse_api_key: "change me"
 config :discourse_elixir, discourse_username: "change me"
 config :discourse_elixir, discourse_endpoint: "change me"
