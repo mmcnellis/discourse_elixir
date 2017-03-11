@@ -6,7 +6,7 @@ defmodule DiscourseElixir do
   @username Application.get_env(:discourse_elixir, :discourse_username)
   @api_key Application.get_env(:discourse_elixir, :discourse_api_key)
 
-  @expected_fields ~w(success message errors user_id user user_badges api_key)
+  @expected_fields ~w(success message errors user_id user user_badges api_key category)
 
   @moduledoc """
   This is a Discourse client for Elixir that builds upon HTTPoison.Base.
@@ -28,7 +28,7 @@ defmodule DiscourseElixir do
         |> Enum.into %{}
         # This workaround is due to Discourse returning 200 with text/plain and an empty
         # body on revoke_api_key success, which causes a Poison decoding error.
-      {:error, :invalid, 0} ->
+      {:error, _} ->
         body
     end
 
@@ -288,6 +288,76 @@ defmodule DiscourseElixir do
   def revoke_user_api_key!(user_id) do
     case revoke_user_api_key(user_id) do
       {:ok, response} -> response
+      {:error, reason} -> raise Error, reason: reason
+    end
+  end
+
+  @doc """
+  Issues a POST request to create a community topic for the given company name, and generates
+  all of its proper subcategories as well.
+
+  If successful, returns {:ok, category}, otherwise returns {:error, reason}
+  """
+  @spec create_community_topic(string, string) :: {:ok, map} | {:error, Error.t}
+  def create_community_topic(name, color) do
+    url = "/categories"
+
+    case post url, {:form, [{"api_username", @username}, {"api_key", @api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"description", "Keep in touch with reps, learn new products, crowd source ideas"}]} do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, body}
+      {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
+        {:error, "Internal server error (500 status code)"}
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Issues a POST request to create a community topic for the given company name, and generates
+  all of its proper subcategories as well.
+
+  This function works the same way as `create_community_topic` but only returns the
+  response when the request is successful. If the request fails, an error is raised.
+  """
+  @spec create_community_topic!(string, string) :: map | no_return
+  def create_community_topic!(name, color) do
+    case create_community_topic(name, color) do
+      {:ok, response} -> response
+      {:error, reason} -> raise Error, reason: reason
+    end
+  end
+
+  @doc """
+  Issues a POST request to create a subcategory for the community topic category whose id is
+  provided.
+
+  If successful, returns {:ok, category}, otherwise returns {:error, reason}
+  """
+  @spec create_category(string, string, integer, string, string) :: {:ok, map} | {:error, Error.t}
+  def create_category(name, color, category_id, description, icon) do
+    url = "/categories"
+
+    case post url, {:form, [{"api_username", @username}, {"api_key", @api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"parent_category_id", category_id}, {"description", description}, {"icon", icon}]} do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, body}
+      {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
+        {:error, "Internal server error (500 status code)"}
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Issues a POST request to create a subcategory for the community topic category whose id is
+  provided.
+
+  This function works the same way as `create_category` but only returns the
+  category when the request is successful. If the request fails, an error is raised.
+  """
+  @spec create_category!(string, string, integer, string, string) :: map | no_return
+  def create_category!(name, color, category_id, description, icon) do
+    case create_category(name, color, category_id, description, icon) do
+      {:ok, body} -> body
       {:error, reason} -> raise Error, reason: reason
     end
   end
