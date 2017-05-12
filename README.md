@@ -8,7 +8,7 @@ Add `discourse_elixir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:discourse_elixir, "~> 0.4.0"}]
+  [{:discourse_elixir, "~> 0.5.1"}]
 end
 ```
 

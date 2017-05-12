@@ -2,10 +2,6 @@ defmodule DiscourseElixir do
   use HTTPoison.Base
   alias HTTPoison.Error
 
-  @endpoint Application.get_env(:discourse_elixir, :discourse_endpoint)
-  @username Application.get_env(:discourse_elixir, :discourse_username)
-  @api_key Application.get_env(:discourse_elixir, :discourse_api_key)
-
   @expected_fields ~w(success message errors user_id user user_badges api_key category)
 
   @moduledoc """
@@ -15,8 +11,12 @@ defmodule DiscourseElixir do
   Discourse users. More functionality may be added, though it is not a priority.
   """
 
+  def endpoint, do: Application.get_env(:discourse_elixir, :discourse_endpoint)
+  def username, do: Application.get_env(:discourse_elixir, :discourse_username)
+  def api_key, do: Application.get_env(:discourse_elixir, :discourse_api_key)
+
   def process_url(url) do
-    @endpoint <> url
+    endpoint <> url
   end
 
   def process_response_body(body) do
@@ -119,7 +119,7 @@ defmodule DiscourseElixir do
   """
   @spec create_user(string, string, string) :: {:ok, map | string} | {:error, map | Error.t}
   def create_user(name, email, password) do
-    url = "/users?api_key=#{@api_key}&api_username=#{@username}"
+    url = "/users?api_key=#{api_key}&api_username=#{username}"
 
     case post url, {:form, [{"name", name}, {"username", name}, {"email", email}, {"password", password}, {"active", true}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: %{errors: errors, message: _, success: _}}} ->
@@ -156,7 +156,7 @@ defmodule DiscourseElixir do
   """
   @spec deactivate_user(string) :: {:ok, string} | {:error, Error.t}
   def deactivate_user(username) do
-    url = "/users/#{username}?api_key=#{@api_key}&api_username=#{@username}"
+    url = "/users/#{username}?api_key=#{api_key}&api_username=#{username}"
 
     case put url, {:form, [{"username", username}, {"active", false}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
@@ -190,7 +190,7 @@ defmodule DiscourseElixir do
   """
   @spec reactivate_user(string) :: {:ok, string} | {:error, Error.t}
   def reactivate_user(username) do
-    url = "/users/#{username}?api_key=#{@api_key}&api_username=#{@username}"
+    url = "/users/#{username}?api_key=#{api_key}&api_username=#{username}"
 
     case put url, {:form, [{"username", username}, {"active", true}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
@@ -225,7 +225,7 @@ defmodule DiscourseElixir do
   def generate_user_api_key(user_id) do
     url = "/admin/users/#{user_id}/generate_api_key"
 
-    case post url, {:form, [{"api_username", @username}, {"api_key", @api_key}]} do
+    case post url, {:form, [{"api_username", username}, {"api_key", api_key}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body.api_key["key"]}
       {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
@@ -267,7 +267,7 @@ defmodule DiscourseElixir do
     # However, when using request/3 directly the endpoint doesn't return json, and
     # thus Poison.decode!/1 in process_response_body/1 makes it throw an error.
 
-    case request :delete, url, {:form, [{"api_username", @username}, {"api_key", @api_key}]} do
+    case request :delete, url, {:form, [{"api_username", username}, {"api_key", api_key}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, "API key successfully revoked"}
       {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
@@ -302,7 +302,7 @@ defmodule DiscourseElixir do
   def create_community_topic(name, color) do
     url = "/categories"
 
-    case post url, {:form, [{"api_username", @username}, {"api_key", @api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"description", "Keep in touch with reps, learn new products, crowd source ideas"}]} do
+    case post url, {:form, [{"api_username", username}, {"api_key", api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"description", "Keep in touch with reps, learn new products, crowd source ideas"}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body}
       {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
@@ -337,7 +337,7 @@ defmodule DiscourseElixir do
   def create_category(name, color, category_id, description, icon) do
     url = "/categories"
 
-    case post url, {:form, [{"api_username", @username}, {"api_key", @api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"parent_category_id", category_id}, {"description", description}, {"icon", icon}]} do
+    case post url, {:form, [{"api_username", username}, {"api_key", api_key}, {"name", name}, {"color", color}, {"text_color", color}, {"parent_category_id", category_id}, {"description", description}, {"icon", icon}]} do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         {:ok, body}
       {:ok, %HTTPoison.Response{status_code: 500, body: body}} ->
